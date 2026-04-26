@@ -134,46 +134,83 @@ def fetch_stock_data(
 # ─────────────────────────────────────────────────────────────────
 def fetch_news_sentiment(symbol: str) -> dict:
     """
-    Fetch the latest news for a symbol and calculate a simple sentiment score.
-    Returns: { 'score': float (-1 to 1), 'label': str, 'headlines': list }
+    Fetch the latest news for a symbol and calculate advanced sentiment score using VADER NLP.
+    Returns: { 'score': float (-1 to 1), 'label': str, 'headlines': list of dicts }
     """
     logger.info(f"[Sentiment] Fetching news headlines for '{symbol}' …")
     try:
+        from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
+        analyzer = SentimentIntensityAnalyzer()
+        
         ticker = yf.Ticker(symbol)
-        news   = ticker.news
-        if not news:
-            return {"score": 0.0, "label": "NEUTRAL", "headlines": []}
+        news_raw = ticker.news
+        if not news_raw:
+            news_raw = []
+            
+        # Fetch generic Indian financial news to ensure regional context
+        try:
+            indian_news = yf.Search("Indian Stock Market").news
+            if indian_news:
+                news_raw.extend(indian_news)
+        except Exception as e:
+            logger.warning(f"Could not fetch generic Indian news: {e}")
 
-        # Simple keyword-based sentiment (Bullish vs Bearish)
-        # Using financial lexicon for higher accuracy
-        bullish_words = {"profit", "surge", "gain", "buy", "growth", "high", "positive", "strong", "outperform", "dividend", "expansion"}
-        bearish_words = {"loss", "plummet", "drop", "sell", "debt", "low", "negative", "weak", "underperform", "inflation", "recession"}
+        if not news_raw:
+            return {"score": 0.0, "label": "NEUTRAL", "headlines": []}
 
         total_score = 0
         headlines   = []
         
-        for item in news[:5]: # Take top 5 news items
-            title = item.get("title", "").lower()
-            headlines.append(item.get("title"))
+        # Deduplicate and limit to top 8 items
+        seen_titles = set()
+        news_items = []
+        for n in news_raw:
+            c = n.get("content", n)
+            t = c.get("title", "")
+            if t and t not in seen_titles:
+                seen_titles.add(t)
+                news_items.append(n)
+        
+        for item in news_items[:8]: # Take top 8 unique news items
+            content = item.get("content", item) # fallback to item if content is not present
             
-            score = 0
-            for w in bullish_words:
-                if w in title: score += 1
-            for w in bearish_words:
-                if w in title: score -= 1
+            title = content.get("title", "")
+            if not title:
+                continue
+                
+            provider_data = content.get("provider", {})
+            publisher = provider_data.get("displayName", "Financial News") if isinstance(provider_data, dict) else "Financial News"
+            
+            link_data = content.get("clickThroughUrl", content.get("canonicalUrl", {}))
+            link = link_data.get("url", "#") if isinstance(link_data, dict) else content.get("link", "#")
+            
+            # Analyze sentiment of the headline
+            vs = analyzer.polarity_scores(title)
+            score = vs['compound'] # Compound score ranges from -1 to 1
+            
+            headlines.append({
+                "title": title,
+                "publisher": publisher,
+                "link": link,
+                "score": score
+            })
             
             total_score += score
 
-        # Normalize score between -1 and 1
-        avg_score = total_score / (len(news[:5]) if news[:5] else 1)
-        # Clamp between -1 and 1
-        final_score = max(min(avg_score, 1.0), -1.0)
+        # Average sentiment
+        avg_score = total_score / len(headlines)
         
-        label = "BULLISH" if final_score > 0.1 else "BEARISH" if final_score < -0.1 else "NEUTRAL"
+        # Determine label based on VADER thresholds
+        if avg_score >= 0.05:
+            label = "BULLISH"
+        elif avg_score <= -0.05:
+            label = "BEARISH"
+        else:
+            label = "NEUTRAL"
         
-        logger.info(f"[Sentiment] Result for {symbol}: {label} ({final_score:.2f})")
+        logger.info(f"[Sentiment] Result for {symbol}: {label} ({avg_score:.2f})")
         return {
-            "score": final_score,
+            "score": avg_score,
             "label": label,
             "headlines": headlines
         }
@@ -188,19 +225,25 @@ def fetch_news_sentiment(symbol: str) -> dict:
 def fetch_global_indices() -> dict:
     """Fetch major global indices for macro awareness."""
     symbols = {
-        "S&P 500": "^GSPC",
-        "NASDAQ": "^IXIC",
-        "Nikkei 225": "^N225",
-        "USD-INR": "INR=X"
+        "NIFTY 50": "^NSEI",
+        "SENSEX": "^BSESN",
+        "NIFTY BANK": "^NSEBANK",
+        "NIFTY IT": "^CNXIT"
     }
     data = {}
     for name, sym in symbols.items():
         try:
             ticker = yf.Ticker(sym)
             hist = ticker.history(period="2d")
-            if not hist.empty:
+            if not hist.empty and len(hist) >= 2:
                 last_price = hist["Close"].iloc[-1]
                 prev_price = hist["Close"].iloc[-2]
+                change = ((last_price - prev_price) / prev_price) * 100
+                data[name] = {"price": last_price, "change": change}
+            elif len(hist) == 1:
+                # If only 1 day of data is available, assume 0% change or get open price
+                last_price = hist["Close"].iloc[0]
+                prev_price = hist["Open"].iloc[0]
                 change = ((last_price - prev_price) / prev_price) * 100
                 data[name] = {"price": last_price, "change": change}
         except:

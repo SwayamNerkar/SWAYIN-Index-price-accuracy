@@ -21,6 +21,9 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "auth_mode" not in st.session_state:
+    st.session_state.auth_mode = "landing"
+
 if not st.session_state.logged_in:
     # ── Landing Page Specialized CSS ──
     st.markdown("""
@@ -31,7 +34,7 @@ if not st.session_state.logged_in:
         [data-testid="stSidebar"] { display: none !important; }
         [data-testid="collapsedControl"] { display: none !important; }
         header { visibility: hidden !important; height: 0 !important; }
-        .stApp { background-color: #0b0f1a; }
+        .stApp { background-color: transparent !important; }
         
         /* Remove Default Streamlit Padding */
         .block-container { 
@@ -42,156 +45,312 @@ if not st.session_state.logged_in:
             max-width: 100% !important; 
         }
 
-        /* ── Parallax Hero Section ── */
+        /* ── Hero Section ── */
         .landing-hero {
             position: relative;
-            background: linear-gradient(rgba(11,15,26,0.7), rgba(11,15,26,0.95)), 
-                        url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=1920&q=80') center/cover fixed;
-            height: 65vh;
+            height: 60vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
-            border-bottom: 1px solid rgba(245,158,11,0.15);
             padding: 0 20px;
-        }
-        .landing-hero::after {
-            content: '';
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 120px;
-            background: linear-gradient(to top, #0b0f1a, transparent);
+            z-index: 10;
         }
         .hero-title {
             font-family: 'Inter', sans-serif;
-            font-size: 5.5rem;
+            font-size: 6.5rem;
             font-weight: 800;
             color: #f8fafc;
             letter-spacing: -0.04em;
-            margin-bottom: 8px;
+            margin-bottom: 15px;
             z-index: 10;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .hero-title span { color: #f59e0b; /* Amber */ }
         .hero-subtitle {
             font-family: 'Inter', sans-serif;
-            font-size: 1.3rem;
+            font-size: 1.4rem;
             color: #cbd5e1;
-            max-width: 650px;
-            line-height: 1.5;
+            max-width: 700px;
+            line-height: 1.6;
             z-index: 10;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+        /* ── Buttons Style via CSS ── */
+        div[data-testid="stButton"] button {
+            border-radius: 12px !important; 
+            font-weight: 800 !important;
+            height: 54px !important;
+            font-size: 1.1rem !important; 
+            text-transform: uppercase; 
+            letter-spacing: 0.08em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border: none !important;
+        }
+        /* Login button - Outline/Ghost style */
+        .btn-login div[data-testid="stButton"] button {
+            background: rgba(11, 15, 26, 0.6) !important;
+            color: #f59e0b !important;
+            border: 2px solid #f59e0b !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        .btn-login div[data-testid="stButton"] button:hover {
+            background: rgba(245, 158, 11, 0.15) !important;
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 15px 30px rgba(245,158,11,0.2) !important;
+        }
+        
+        /* Signup button - Solid style */
+        .btn-signup div[data-testid="stButton"] button {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+            color: #0b0f1a !important;
+            box-shadow: 0 10px 25px rgba(245,158,11,0.3) !important;
+        }
+        .btn-signup div[data-testid="stButton"] button:hover {
+            transform: translateY(-3px) scale(1.02); 
+            box-shadow: 0 20px 40px rgba(245,158,11,0.5) !important;
         }
 
         /* ── Parallax Feature Section ── */
         .feature-panel {
-            background: linear-gradient(rgba(11,15,26,0.92), rgba(11,15,26,0.98)), 
-                        url('https://images.unsplash.com/photo-1640161704729-cbe966a08476?auto=format&fit=crop&w=1920&q=80') center/cover fixed;
+            background: linear-gradient(rgba(11,15,26,0.95), rgba(11,15,26,0.99));
             padding: 100px 40px;
             text-align: center;
-            border-top: 1px solid rgba(255,255,255,0.03);
+            border-top: 1px solid rgba(245,158,11,0.15);
+            position: relative;
+            z-index: 10;
         }
         .feat-title {
             font-family: 'Inter', sans-serif;
-            font-size: 2.2rem; color: #f8fafc; font-weight: 800; margin-bottom: 50px;
+            font-size: 2.5rem; color: #f8fafc; font-weight: 800; margin-bottom: 60px;
             letter-spacing: -0.02em;
         }
-        .feat-grid { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+        .feat-grid { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
         .feat-box {
-            background: rgba(30,41,59,0.4); 
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255,255,255,0.08); 
-            border-radius: 16px;
-            padding: 35px 30px; 
-            width: 320px; 
+            background: rgba(30,41,59,0.5); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 20px;
+            padding: 40px 35px; 
+            width: 350px; 
             text-align: left;
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            transition: transform 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
         .feat-box:hover {
-            transform: translateY(-5px);
-            border-color: rgba(245,158,11,0.4);
+            transform: translateY(-10px);
+            border-color: rgba(245,158,11,0.5);
+            box-shadow: 0 20px 40px rgba(245,158,11,0.15);
         }
         .feat-box h3 { 
-            color: #f59e0b; font-size: 1.25rem; font-family: 'Inter', sans-serif; 
-            font-weight: 700; margin-bottom: 12px; margin-top: 0;
+            color: #f59e0b; font-size: 1.4rem; font-family: 'Inter', sans-serif; 
+            font-weight: 800; margin-bottom: 15px; margin-top: 0;
+            letter-spacing: -0.02em;
         }
         .feat-box p { 
-            color: #94a3b8; font-size: 0.95rem; line-height: 1.6; font-family: 'Inter', sans-serif; margin: 0;
+            color: #94a3b8; font-size: 1rem; line-height: 1.7; font-family: 'Inter', sans-serif; margin: 0;
         }
         
         /* Clean up Auth Form styles & Animations */
         @keyframes floatUp {
-            0% { opacity: 0; transform: translateY(40px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeInScale {
-            0% { opacity: 0; transform: scale(0.97); }
-            100% { opacity: 1; transform: scale(1); }
+            0% { opacity: 0; transform: translateY(40px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
         .auth-wrapper {
-            max-width: 440px; margin: -100px auto 60px auto; 
-            padding: 35px 30px;
-            background: rgba(17,24,39,0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.08); 
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6);
+            max-width: 480px; margin: 40px auto 60px auto; 
+            padding: 45px 40px;
+            background: rgba(17,24,39,0.85);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(245,158,11,0.2); 
+            border-radius: 24px;
+            box-shadow: 0 30px 60px -12px rgba(0,0,0,0.8), 0 0 40px rgba(245,158,11,0.1);
             position: relative; z-index: 20;
-            animation: floatUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            animation: floatUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
-        div[data-baseweb="tab-list"] { justify-content: center !important; gap: 20px; }
-        div[data-testid="stForm"] {
-            animation: fadeInScale 0.4s ease forwards;
-            padding-top: 15px !important;
+        .auth-header {
+            text-align: center;
+            margin-bottom: 30px;
         }
-        .stButton>button {
-            border-radius: 10px !important; font-weight: 700 !important;
-            background: #f59e0b !important; color: #0b0f1a !important; border: none !important;
-            height: 48px !important; margin-top: 10px !important;
-            font-size: 1.05rem !important; text-transform: uppercase; letter-spacing: 0.05em;
-            transition: all 0.3s ease !important;
+        .auth-header h2 {
+            font-family: 'Inter', sans-serif;
+            color: #f8fafc;
+            font-size: 2rem;
+            font-weight: 800;
+            margin: 0 0 10px 0;
         }
-        .stButton>button:hover {
-            background: #fbbf24 !important; transform: translateY(-2px); 
-            box-shadow: 0 10px 20px rgba(245,158,11,0.3) !important;
+        .auth-header p {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin: 0;
         }
         .stTextInput input { 
-            border-radius: 8px !important; padding: 12px 14px !important; 
-            font-size: 1rem !important; background: rgba(0,0,0,0.3) !important; 
+            border-radius: 10px !important; padding: 14px 16px !important; 
+            font-size: 1.05rem !important; background: rgba(0,0,0,0.4) !important; 
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            color: #f8fafc !important;
+        }
+        .stTextInput input:focus {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 1px #f59e0b !important;
         }
 
         /* ── Smooth Scrolling Marquee ── */
         .marquee-container {
             width: 100%; overflow: hidden; background: #f59e0b; color: #0b0f1a;
-            padding: 12px 0; font-family: 'JetBrains Mono', monospace; font-weight: 700; 
-            font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase;
+            padding: 15px 0; font-family: 'JetBrains Mono', monospace; font-weight: 800; 
+            font-size: 0.9rem; letter-spacing: 0.15em; text-transform: uppercase;
+            position: relative;
+            z-index: 10;
         }
         .marquee-content {
-            display: inline-block; white-space: nowrap; animation: marqueeScroll 20s linear infinite;
+            display: inline-block; white-space: nowrap; animation: marqueeScroll 25s linear infinite;
         }
         @keyframes marqueeScroll {
             0% { transform: translateX(0); } 100% { transform: translateX(-50%); }
         }
+        
+        /* Back button */
+        .btn-back div[data-testid="stButton"] button {
+            background: transparent !important;
+            color: #94a3b8 !important;
+            border: 1px solid rgba(255,255,255,0.1) !important;
+            box-shadow: none !important;
+            height: 44px !important;
+            font-size: 0.9rem !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+        }
+        .btn-back div[data-testid="stButton"] button:hover {
+            color: #f8fafc !important;
+            border-color: rgba(255,255,255,0.3) !important;
+            transform: translateY(-2px) !important;
+            background: rgba(255,255,255,0.05) !important;
+        }
+        
+        /* Remove background from tabs content if any */
+        .stTabs [data-baseweb="tab-list"] { display: none !important; }
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. Hero Section
-    st.markdown("""
-        <div class="landing-hero">
-            <div class="hero-title">SWAYIN<span>.AI</span></div>
-            <div class="hero-subtitle">The next-generation terminal for algorithmic predictions, sentiment intelligence, and technical confluence.</div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # 2. Auth Section (Streamlit Native inside custom columns)
-    st.markdown("<div class='auth-wrapper'>", unsafe_allow_html=True)
-    t_login, t_signup = st.tabs(["Secure Login", "Register"])
-    
-    with t_login:
+    # ── Inject WebGL Background ──
+    st.markdown("<div id='vanta-bg' style='position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:0;'></div>", unsafe_allow_html=True)
+    import streamlit.components.v1 as components
+    components.html("""
+        <script>
+            const parentDoc = window.parent.document;
+            if (!parentDoc.getElementById('vanta-script')) {
+                const threeScript = parentDoc.createElement('script');
+                threeScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js';
+                threeScript.id = 'three-script';
+                parentDoc.head.appendChild(threeScript);
+                
+                threeScript.onload = function() {
+                    const vantaScript = parentDoc.createElement('script');
+                    vantaScript.src = 'https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js';
+                    vantaScript.id = 'vanta-script';
+                    parentDoc.head.appendChild(vantaScript);
+                    
+                    vantaScript.onload = function() {
+                        const bgElement = parentDoc.getElementById('vanta-bg');
+                        if (bgElement) {
+                            window.parent.VANTA.NET({
+                              el: bgElement,
+                              mouseControls: true,
+                              touchControls: true,
+                              gyroControls: false,
+                              minHeight: 200.00,
+                              minWidth: 200.00,
+                              scale: 1.00,
+                              scaleMobile: 1.00,
+                              color: 0xf59e0b,
+                              backgroundColor: 0x0b0f1a,
+                              points: 14.00,
+                              maxDistance: 22.00,
+                              spacing: 16.00,
+                              showDots: true
+                            });
+                        }
+                    }
+                }
+            } else {
+                // If script exists, re-init in case element was removed and re-added
+                setTimeout(() => {
+                    if (window.parent.VANTA && window.parent.VANTA.NET) {
+                        const bgElement = parentDoc.getElementById('vanta-bg');
+                        // Ensure old canvas is removed to prevent duplicates
+                        if (bgElement && bgElement.children.length === 0) {
+                            window.parent.VANTA.NET({
+                                el: bgElement,
+                                color: 0xf59e0b,
+                                backgroundColor: 0x0b0f1a,
+                                points: 14.00,
+                                maxDistance: 22.00,
+                                spacing: 16.00,
+                                showDots: true
+                            });
+                        }
+                    }
+                }, 500);
+            }
+        </script>
+    """, height=0, width=0)
+
+    if st.session_state.auth_mode == "landing":
+        # 1. Hero Section
+        st.markdown("""
+            <div class="landing-hero">
+                <div class="hero-title">SWAYIN<span>.AI</span></div>
+                <div class="hero-subtitle">The next-generation terminal for algorithmic predictions, sentiment intelligence, and technical confluence.</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Action Buttons
+        st.write("") # Spacer
+        col_space1, col_login, col_space2, col_signup, col_space3 = st.columns([1.5, 2, 0.2, 2, 1.5])
+        
+        with col_login:
+            st.markdown('<div class="btn-login">', unsafe_allow_html=True)
+            if st.button("SECURE LOGIN", use_container_width=True):
+                st.session_state.auth_mode = "login"
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        with col_signup:
+            st.markdown('<div class="btn-signup">', unsafe_allow_html=True)
+            if st.button("CREATE ACCOUNT", use_container_width=True):
+                st.session_state.auth_mode = "signup"
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+        st.markdown('<div style="height: 15vh;"></div>', unsafe_allow_html=True)
+
+    elif st.session_state.auth_mode == "login":
+        # Back Button
+        st.markdown('<div style="position: absolute; z-index: 30; top: 0px; left: 0px;" class="btn-back">', unsafe_allow_html=True)
+        if st.button("← Back to Home"):
+            st.session_state.auth_mode = "landing"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Login Form
+        st.markdown("""
+            <div class="auth-wrapper">
+                <div class="auth-header">
+                    <h2>Welcome Back</h2>
+                    <p>Enter your credentials to access the terminal</p>
+                </div>
+        """, unsafe_allow_html=True)
+        
         with st.form("login_form"):
             login_email = st.text_input("Terminal ID / Email Address", placeholder="e.g. trader@swayin.ai")
             login_pass = st.text_input("Access Key / Password", type="password")
-            if st.form_submit_button("Authorize Access", use_container_width=True):
+            st.markdown('<div class="btn-signup">', unsafe_allow_html=True)
+            if st.form_submit_button("AUTHORIZE ACCESS", use_container_width=True):
                 if login_email and login_pass:
                     import auth_system
                     success, msg = auth_system.sign_in(login_email, login_pass)
@@ -202,61 +361,83 @@ if not st.session_state.logged_in:
                         st.error(f"Access Denied: {msg}")
                 else:
                     st.error("Please provide both email and password.")
-                
-    with t_signup:
+            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    elif st.session_state.auth_mode == "signup":
+        # Back Button
+        st.markdown('<div style="position: absolute; z-index: 30; top: 0px; left: 0px;" class="btn-back">', unsafe_allow_html=True)
+        if st.button("← Back to Home"):
+            st.session_state.auth_mode = "landing"
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # Signup Form
+        st.markdown("""
+            <div class="auth-wrapper">
+                <div class="auth-header">
+                    <h2>Deploy Terminal</h2>
+                    <p>Register to unlock AI predictive capabilities</p>
+                </div>
+        """, unsafe_allow_html=True)
+        
         with st.form("signup_form"):
-            signup_name = st.text_input("Full Name")
-            signup_email = st.text_input("Email Address")
-            signup_pass = st.text_input("Create Access Key", type="password")
-            if st.form_submit_button("Deploy Terminal", use_container_width=True):
-                if signup_email and signup_pass:
+            signup_name = st.text_input("Full Name", placeholder="e.g. John Doe")
+            signup_email = st.text_input("Email Address", placeholder="e.g. trader@swayin.ai")
+            signup_pass = st.text_input("Create Access Key", type="password", placeholder="Strong password")
+            st.markdown('<div class="btn-signup">', unsafe_allow_html=True)
+            if st.form_submit_button("CREATE ACCOUNT", use_container_width=True):
+                if signup_email and signup_pass and signup_name:
                     import auth_system
                     success, msg = auth_system.sign_up(signup_email, signup_pass, signup_name)
                     if success:
                         st.success("Registration successful! Proceed to Secure Login.")
+                        st.session_state.auth_mode = "login"
                     else:
                         st.error(f"Failed to Deploy: {msg}")
                 else:
-                    st.error("Email and Access Key are required.")
-    st.markdown("</div>", unsafe_allow_html=True)
+                    st.error("All fields are required.")
+            st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
 
-    # 3. Scrolling Animated Marquee
-    marquee_text = "&nbsp; • &nbsp; DEEP LSTM PREDICTIONS &nbsp; • &nbsp; LIVE MARKET SENTIMENT &nbsp; • &nbsp; TECHNICAL CONFLUENCE &nbsp; • &nbsp; EXPLAINABLE AI &nbsp; • &nbsp; SECURE TERMINAL &nbsp; • &nbsp; NEXT GEN ALGORITHMS "
-    st.markdown(f"""
-        <div class="marquee-container">
-            <div class="marquee-content">
-                {marquee_text * 4}
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
-
-    # 4. Features Parallax Sub-section
-    st.markdown("""
-        <div class="feature-panel">
-            <div class="feat-title">Why Professionals Choose SWAYIN.AI</div>
-            <div class="feat-grid">
-                <div class="feat-box">
-                    <h3>Deep Neural Processing</h3>
-                    <p>Industry-grade multi-layer LSTM architecture designed to capture volatile market sequences and time-series anomalies.</p>
-                </div>
-                <div class="feat-box">
-                    <h3>Transparent XAI</h3>
-                    <p>Don't just get predictions. Understand exactly which technical signals triggered the AI output via SHAP-driven analytics.</p>
-                </div>
-                <div class="feat-box">
-                    <h3>Live Sentiment Edge</h3>
-                    <p>Real-time NLP sentiment extraction from top financial news headlines, actively combining with quantitative indicators.</p>
+    if st.session_state.auth_mode == "landing":
+        # 3. Scrolling Animated Marquee
+        marquee_text = "&nbsp; • &nbsp; DEEP LSTM PREDICTIONS &nbsp; • &nbsp; LIVE MARKET SENTIMENT &nbsp; • &nbsp; TECHNICAL CONFLUENCE &nbsp; • &nbsp; EXPLAINABLE AI &nbsp; • &nbsp; SECURE TERMINAL &nbsp; • &nbsp; NEXT GEN ALGORITHMS "
+        st.markdown(f"""
+            <div class="marquee-container">
+                <div class="marquee-content">
+                    {marquee_text * 4}
                 </div>
             </div>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    # 4. Footer
-    st.markdown("""
-        <div style="text-align:center; padding:30px; background:#0b0f1a; color:#475569; font-size:0.8rem; font-family:'Inter',sans-serif;">
-            &copy; 2026 SWAYIN.AI Intelligence Systems. Not actual financial advice.
-        </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
+
+        # 4. Features Parallax Sub-section
+        st.markdown("""
+            <div class="feature-panel">
+                <div class="feat-title">Why Professionals Choose SWAYIN.AI</div>
+                <div class="feat-grid">
+                    <div class="feat-box">
+                        <h3>Deep Neural Processing</h3>
+                        <p>Industry-grade multi-layer LSTM architecture designed to capture volatile market sequences and time-series anomalies.</p>
+                    </div>
+                    <div class="feat-box">
+                        <h3>Transparent XAI</h3>
+                        <p>Don't just get predictions. Understand exactly which technical signals triggered the AI output via SHAP-driven analytics.</p>
+                    </div>
+                    <div class="feat-box">
+                        <h3>Live Sentiment Edge</h3>
+                        <p>Real-time NLP sentiment extraction from top financial news headlines, actively combining with quantitative indicators.</p>
+                    </div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # 5. Footer
+        st.markdown("""
+            <div style="text-align:center; padding:30px; background:#0b0f1a; color:#475569; font-size:0.9rem; font-family:'Inter',sans-serif; position:relative; z-index:10; border-top: 1px solid rgba(255,255,255,0.05);">
+                &copy; 2026 SWAYIN.AI Intelligence Systems. Not actual financial advice.
+            </div>
+        """, unsafe_allow_html=True)
 
     st.stop()  # END LANDING PAGE EXECUTION
 
@@ -990,8 +1171,8 @@ INDIAN_MARKET = {
 }
 
 
-@st.cache_data(ttl=600)
-def _get_global_context():
+@st.cache_data(ttl=60)
+def _get_market_indices():
     from data_fetcher import fetch_global_indices
     return fetch_global_indices()
 
@@ -999,7 +1180,7 @@ def _get_global_context():
 # ══════════════════════════════════════════════════════════════════════
 #  NAVBAR
 # ══════════════════════════════════════════════════════════════════════
-global_indices = _get_global_context()
+global_indices = _get_market_indices()
 
 # Build small ticker pills for navbar
 ticker_html = ""
@@ -1397,19 +1578,37 @@ if run_btn or "results" in st.session_state:
         sent_cls    = "s-bullish" if "BULL" in s_label else "s-bearish" if "BEAR" in s_label else "s-neutral"
         st.markdown(f"""
         <div class="sentiment-card">
-            <div class="s-label">News Sentiment</div>
+            <div class="s-label">NLP News Sentiment</div>
             <div class="s-value {sent_cls}">{s_label}</div>
-            <div class="s-score">Score: {s_score:+.2f}</div>
+            <div class="s-score">VADER Score: {s_score:+.2f}</div>
         </div>
         """, unsafe_allow_html=True)
-        with st.expander("📰 Recent Headlines"):
+        with st.expander("📰 Live Financial News API"):
             if sent.get("headlines"):
-                for h in sent["headlines"][:3]:
-                    st.markdown(f"<div style='font-size:0.8rem; color:#94a3b8; padding:4px 0; "
-                                f"border-bottom:1px solid rgba(255,255,255,0.05);'>• {h}</div>",
-                                unsafe_allow_html=True)
+                for h in sent["headlines"][:6]:
+                    if isinstance(h, dict):
+                        # Advanced NLP Rendering
+                        title = h.get("title", "")
+                        pub = h.get("publisher", "Yahoo Finance API")
+                        link = h.get("link", "#")
+                        score = h.get("score", 0.0)
+                        
+                        s_color = "#10b981" if score > 0 else "#f43f5e" if score < 0 else "#94a3b8"
+                        
+                        st.markdown(f"""
+                        <div style='padding:12px 0; border-bottom:1px solid rgba(255,255,255,0.05);'>
+                            <a href='{link}' target='_blank' style='text-decoration:none; color:#f1f5f9; font-size:0.85rem; font-weight:600; display:block; margin-bottom:6px; line-height:1.4;'>{title}</a>
+                            <div style='display:flex; justify-content:space-between; align-items:center;'>
+                                <span style='font-size:0.7rem; color:#64748b; font-weight:600; text-transform:uppercase;'>{pub}</span>
+                                <span style='font-size:0.72rem; color:{s_color}; font-family:"JetBrains Mono",monospace; font-weight:700;'>NLP: {score:+.2f}</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        # Fallback for old cache
+                        st.markdown(f"<div style='font-size:0.8rem; color:#94a3b8; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.05);'>• {h}</div>", unsafe_allow_html=True)
             else:
-                st.caption("No recent headlines found.")
+                st.caption("No recent news available from the API.")
 
     with intel_m:
         xai_data = r.get("xai", {})
