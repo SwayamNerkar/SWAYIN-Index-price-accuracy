@@ -940,7 +940,7 @@ st.markdown("""
 
 # ══════════════════════════════════════════════════════════════════════
 #  DATA HELPERS
-# ══════════════════════════════════════════════════════════════════════
+#
 @st.cache_data(show_spinner="Fetching market data…", ttl=300)
 def _get_data(symbol, interval, period):
     from data_fetcher import fetch_stock_data
@@ -1016,7 +1016,7 @@ def _get_model_and_preds(symbol, interval, period, retrain):
 
 # ══════════════════════════════════════════════════════════════════════
 #  MARKET DATA
-# ══════════════════════════════════════════════════════════════════════
+
 INDIAN_MARKET = {
     "📊 Indices": [
         ("NIFTY 50",            "^NSEI"),
@@ -1170,16 +1170,13 @@ INDIAN_MARKET = {
     ],
 }
 
-
 @st.cache_data(ttl=60)
 def _get_market_indices():
     from data_fetcher import fetch_global_indices
     return fetch_global_indices()
 
 
-# ══════════════════════════════════════════════════════════════════════
-#  NAVBAR
-# ══════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════
 global_indices = _get_market_indices()
 
 # Build small ticker pills for navbar
