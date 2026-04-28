@@ -1358,6 +1358,14 @@ with st.sidebar:
     )
 
     st.markdown('<div class="sidebar-section-title">Model</div>', unsafe_allow_html=True)
+    
+    chart_type = st.radio(
+        "Display Mode",
+        ["Line Chart", "Candlestick"],
+        index=0,
+        horizontal=True,
+        help="Choose visualization style"
+    )
 
     retrain = st.checkbox("Force Retrain", value=False)
 
@@ -1365,8 +1373,13 @@ with st.sidebar:
     run_btn = st.button("▶  Run Analysis", type="primary", use_container_width=True)
 
     st.divider()
+    if st.button("🚪  Secure Logout", use_container_width=True, type="secondary"):
+        st.session_state.logged_in = False
+        st.session_state.auth_mode = "landing"
+        st.rerun()
+
     st.markdown("""
-    <div style="font-size:0.72rem; color:#64748b; line-height:1.7; padding:0 2px;">
+    <div style="font-size:0.72rem; color:#64748b; line-height:1.7; padding:0 2px; margin-top:10px;">
         <div style="color:#94a3b8; font-weight:600; margin-bottom:6px;">About SWAYIN.AI</div>
         Deep Stacked LSTM (3 layers · 100‑100‑50 units)<br>
         Trained on up to 5 years of market data<br>
@@ -1689,11 +1702,21 @@ if run_btn or "results" in st.session_state:
             test_series[idx] = float(v)
 
     fig_main = go.Figure()
-    fig_main.add_trace(go.Scatter(
-        x=dates, y=df["Close"].tolist(),
-        name="Actual Close",
-        line=dict(color="#94a3b8", width=1.5),
-    ))
+    if chart_type == "Candlestick":
+        fig_main.add_trace(go.Candlestick(
+            x=dates,
+            open=df["Open"], high=df["High"],
+            low=df["Low"], close=df["Close"],
+            name="Market Data",
+            increasing_line_color="#10b981", decreasing_line_color="#f43f5e"
+        ))
+    else:
+        fig_main.add_trace(go.Scatter(
+            x=dates, y=df["Close"].tolist(),
+            name="Actual Close",
+            line=dict(color="#94a3b8", width=1.5),
+        ))
+
     fig_main.add_trace(go.Scatter(
         x=dates, y=train_series,
         name="Train Prediction",
@@ -1747,7 +1770,7 @@ if run_btn or "results" in st.session_state:
     st.markdown('<div class="section-label">Market Analysis</div>', unsafe_allow_html=True)
     st.markdown('<div class="section-title">Technical Indicators</div>', unsafe_allow_html=True)
 
-    tab1, tab2, tab3 = st.tabs(["  RSI (14)  ", "  MACD  ", "  Bollinger Bands  "])
+    tab1, tab2, tab3, tab4 = st.tabs(["  RSI (14)  ", "  MACD  ", "  Bollinger Bands  ", "  Volume  "])
 
     # Base chart style — NO 'yaxis' or 'margin' here to avoid duplicate-kwarg errors
     _CL = dict(
@@ -1852,6 +1875,38 @@ if run_btn or "results" in st.session_state:
         else:
             st.info("Bollinger Band data not available for this instrument.")
 
+    with tab4:
+        if "Volume" in df.columns:
+            fig_vol = go.Figure()
+            colors_vol = ["#10b981" if df["Close"].iloc[i] >= df["Open"].iloc[i] else "#f43f5e" 
+                          for i in range(len(df))]
+            fig_vol.add_trace(go.Bar(
+                x=dates, y=df["Volume"].tolist(),
+                name="Volume",
+                marker_color=colors_vol,
+                opacity=0.8
+            ))
+            fig_vol.update_layout(
+                height=300,
+                margin=_MARGIN,
+                xaxis={**_GRID_X},
+                yaxis={**_GRID_Y},
+                **_CL,
+            )
+            st.plotly_chart(fig_vol, use_container_width=True)
+            
+            # Add Volume Stats
+            v_avg = df["Volume"].mean()
+            v_curr = df["Volume"].iloc[-1]
+            st.markdown(f"""
+            <div style="display:flex; gap:20px; margin-top:10px;">
+                <div style="font-size:0.8rem; color:#94a3b8;">Average Volume: <span style="color:#f1f5f9; font-weight:600;">{v_avg:,.0f}</span></div>
+                <div style="font-size:0.8rem; color:#94a3b8;">Current Volume: <span style="color:#f1f5f9; font-weight:600;">{v_curr:,.0f}</span></div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.info("Volume data not available.")
+
     # ══════════════════════════════════════════════════════════════
     #  SECTION 6 — 5-MINUTE SIMULATION
     # ══════════════════════════════════════════════════════════════
@@ -1941,6 +1996,17 @@ if run_btn or "results" in st.session_state:
         )
         st.plotly_chart(fig_bt, use_container_width=True)
 
+    # Export Trade Log CSV
+    if bt.get("Trade Log"):
+        trade_df = pd.DataFrame(bt["Trade Log"])
+        csv_trades = trade_df.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            label="📊 Download Backtest Trade Log",
+            data=csv_trades,
+            file_name=f"SWAYIN_Backtest_{symbol}_{interval}.csv",
+            mime="text/csv",
+        )
+
     # ══════════════════════════════════════════════════════════════
     #  SECTION 8 — MODEL EVALUATION TABLE
     # ══════════════════════════════════════════════════════════════
@@ -1953,6 +2019,15 @@ if run_btn or "results" in st.session_state:
     st.dataframe(
         metrics_df.style.format({"Value": "{:.4f}"}),
         use_container_width=True,
+    )
+    
+    # Export Metrics CSV
+    csv_metrics = metrics_df.to_csv().encode("utf-8")
+    st.download_button(
+        label="📥 Download Metrics Report",
+        data=csv_metrics,
+        file_name=f"SWAYIN_Metrics_{symbol}_{interval}.csv",
+        mime="text/csv",
     )
 
     # ══════════════════════════════════════════════════════════════
