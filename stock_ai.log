@@ -3760,3 +3760,43 @@
 [2026-04-28 21:44:54] [INFO] StockAI —   Winning Trades        : 3
 [2026-04-28 21:44:54] [INFO] StockAI —   Win Rate (%)          : 50.0
 [2026-04-28 21:44:54] [INFO] StockAI — =============================================
+[2026-04-28 22:55:48] [INFO] StockAI — [yfinance] Attempt 1/3 | symbol=^NSEI | interval=1d
+[2026-04-28 22:55:48] [INFO] StockAI — [yfinance] Fetching daily data for '^NSEI' (period=5y) …
+[2026-04-28 22:55:49] [INFO] StockAI — [yfinance] ✅ Daily — 1236 rows fetched for '^NSEI' (2021-04-28 → 2026-04-28)
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added MA50 indicator.
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added EMA50 indicator.
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added RSI14 indicator.
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added Bollinger Bands (BB_Upper, BB_Middle, BB_Lower).
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added MACD indicators.
+[2026-04-28 22:55:49] [DEBUG] StockAI — Added ATR indicator.
+[2026-04-28 22:55:49] [INFO] StockAI — Feature engineering complete: 1187 rows retained (49 NaN rows dropped). Columns: ['Open', 'High', 'Low', 'Close', 'Volume', 'MA50', 'EMA50', 'RSI14', 'BB_Upper', 'BB_Middle', 'BB_Lower', 'MACD', 'MACD_Signal', 'MACD_Hist', 'ATR']
+[2026-04-28 22:55:49] [INFO] StockAI — Preprocessing complete | TIME_STEP=100 | X_train=(849, 100, 15) | X_test=(238, 100, 15)
+[2026-04-28 22:56:01] [INFO] StockAI — Model loaded ← C:\Users\SANKALP NERKAR\Downloads\SWAYIN.AI-index-price-accuracy.-main (1)\SWAYIN.AI-index-price-accuracy.-main\model.h5
+[2026-04-28 22:56:01] [INFO] StockAI — Generating train-set predictions …
+[2026-04-28 22:56:06] [INFO] StockAI — Generating test-set predictions …
+[2026-04-28 22:56:07] [INFO] StockAI — Predictions ready | train=849 | test=238
+[2026-04-28 22:56:07] [INFO] StockAI — Predicting next-day price …
+[2026-04-28 22:56:07] [INFO] StockAI — [Next-Day] Predicted: 24154.63 | BUY 📈
+[2026-04-28 22:56:07] [INFO] StockAI — Simulating next 5 × 5-minute predictions …
+[2026-04-28 22:56:08] [INFO] StockAI — [5-Min Sim] Steps: {'t+5min': 24154.63, 't+10min': 24121.78, 't+15min': 24092.69, 't+20min': 24069.23, 't+25min': 24051.87} | BUY 📈
+[2026-04-28 22:56:08] [INFO] StockAI — [Sentiment] Fetching news headlines for '^NSEI' …
+[2026-04-28 22:56:09] [INFO] StockAI — [Sentiment] Result for ^NSEI: BULLISH (0.23)
+[2026-04-28 22:56:11] [INFO] StockAI — [XAI] Feature Importance calculated for 15 features.
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
+[2026-04-28 22:56:11] [INFO] StockAI —   MODEL EVALUATION METRICS
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
+[2026-04-28 22:56:11] [INFO] StockAI —   RMSE                      : 531.8324
+[2026-04-28 22:56:11] [INFO] StockAI —   MAE                       : 463.1871
+[2026-04-28 22:56:11] [INFO] StockAI —   MAPE (%)                  : 1.8389
+[2026-04-28 22:56:11] [INFO] StockAI —   Directional Accuracy      : 51.4768
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
+[2026-04-28 22:56:11] [INFO] StockAI —   BACKTESTING RESULTS
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
+[2026-04-28 22:56:11] [INFO] StockAI —   Initial Capital       : 100000.0
+[2026-04-28 22:56:11] [INFO] StockAI —   Final Capital         : 95659.09
+[2026-04-28 22:56:11] [INFO] StockAI —   Total Return (%)      : -4.34
+[2026-04-28 22:56:11] [INFO] StockAI —   Number of Trades      : 6
+[2026-04-28 22:56:11] [INFO] StockAI —   Winning Trades        : 3
+[2026-04-28 22:56:11] [INFO] StockAI —   Win Rate (%)          : 50.0
+[2026-04-28 22:56:11] [INFO] StockAI — =============================================
