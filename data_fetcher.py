@@ -20,7 +20,7 @@ from config import (
 
 # ─────────────────────────────────────────────────────────────────
 #  DAILY DATA
-# ─────────────────────────────────────────────────────────────────
+# 
 def _fetch_daily(symbol: str, period: str) -> pd.DataFrame:
     """Download full daily OHLCV history via yfinance."""
     logger.info(f"[yfinance] Fetching daily data for '{symbol}' (period={period}) …")

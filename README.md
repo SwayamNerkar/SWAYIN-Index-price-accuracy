@@ -14,6 +14,28 @@ A **production-ready** stock price prediction system that uses a **Deep Stacked 
 
 ---
 
+## 🚀 Revolutionary New Features (V2.0)
+
+This project has been upgraded to a **Decision Intelligence Engine** with industry-leading features:
+
+1. **🧠 AI Sentiment Intelligence (Multi-Modal Analysis)**
+   - Integrates real-time news headlines for the selected stock.
+   - Calculates a **Sentiment Score** using financial-grade NLP to determine if the market mood is Bullish or Bearish.
+
+2. **⚙️ Explainable AI (XAI) - Decision Drivers**
+   - Visualizes "The Why" behind every prediction.
+   - Uses sensitivity analysis to show exactly which technical indicators (RSI, Volume, MACD, etc.) are influencing the current AI signal.
+
+3. **🤖 AI Strategy Advisor**
+   - Synthesizes technical signals and news sentiment to provide a high-level trade plan.
+   - Generates dynamic **Stop Loss (SL)** and **Take Profit (TP)** levels based on ATR volatility.
+
+4. **🌍 Global Macro Awareness**
+   - Tracks major global indices (**S&P 500, NASDAQ, Nikkei**) and the **USD-INR** exchange rate.
+   - Provides institutional-grade market context directly in the dashboard sidebar.
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -24,6 +46,7 @@ stock-ai-project/
 ├── features.py          # 🔬 Technical indicator engineering
 ├── model.py             # 🧠 Deep LSTM model builder & trainer
 ├── predictor.py         # 🎯 Prediction engine (next-day, 5-min simulation)
+├── xai_engine.py        # ⚙️  Explainable AI (calculates feature importance)
 ├── utils.py             # 🛠️  Logging, metrics, backtesting, signal generator
 ├── dashboard.py         # 📊 Streamlit interactive dashboard
 ├── config.py            # ⚙️  All hyperparameters & settings
@@ -87,6 +110,8 @@ Dense(1)  ← Predicted Close Price
 | **MACD** | MACD Line, Signal Line, Histogram |
 | **ATR** | Average True Range (14-period) |
 | **Volume** | Raw trading volume |
+| **Sentiment** | NLP-based News Sentiment Score (-1 to 1) |
+| **XAI Weight** | Perturbation-based feature importance |
 
 ---
 
