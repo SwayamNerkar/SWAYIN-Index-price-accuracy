@@ -93,18 +93,19 @@ def create_visualizations(
     gs  = gridspec.GridSpec(3, 2, figure=fig)
 
     # ── Prepare index arrays ──────────────────────────────────
-    close   = df["Close"].values
-    n_train = train_size - TIME_STEP
-    n_test  = len(test_pred)
-    dates   = df.index
+    close = df["Close"].values
+    dates = df.index
 
     # Pad predictions with NaN so they align on the full date axis
-    train_plot            = np.full(len(close), np.nan)
-    train_plot[TIME_STEP : TIME_STEP + len(actual_train)] = train_pred
+    start_train = max(0, len(close) - len(actual_train) - len(actual_test))
+    train_plot = np.full(len(close), np.nan)
+    end_train = min(len(close), start_train + len(actual_train))
+    train_plot[start_train:end_train] = train_pred[:end_train - start_train]
 
-    test_plot             = np.full(len(close), np.nan)
-    start_test            = TIME_STEP + n_train
-    test_plot[start_test : start_test + len(actual_test)] = test_pred
+    start_test = end_train
+    test_plot = np.full(len(close), np.nan)
+    end_test = min(len(close), start_test + len(actual_test))
+    test_plot[start_test:end_test] = test_pred[:end_test - start_test]
 
     # ── Panel 1: Actual vs Predicted ─────────────────────────
     ax1 = fig.add_subplot(gs[0, :])   # full-width
@@ -190,15 +191,25 @@ def run_pipeline(symbol: str, interval: str, period: str, retrain: bool):
     X_train, y_train, X_test, y_test, scaler, train_size, target_idx, numeric_df = \
         preprocess_data(df)
 
-    n_features = X_train.shape[2]
-    input_shape = (TIME_STEP, n_features)
+    n_features  = X_train.shape[2]
+    seq_len     = X_train.shape[1]
+    input_shape = (seq_len, n_features)
 
     # ── 4. Build / Load Model ─────────────────────────────────
+    model_loaded = False
     if os.path.exists(MODEL_PATH) and not retrain:
-        logger.info(f"Loading existing model from {MODEL_PATH} …")
-        model   = load_model(MODEL_PATH)
-        history = None
-    else:
+        try:
+            logger.info(f"Loading existing model from {MODEL_PATH} …")
+            model   = load_model(MODEL_PATH)
+            if model.input_shape[1:] == input_shape:
+                history = None
+                model_loaded = True
+            else:
+                logger.info(f"Model input shape changed ({model.input_shape[1:]} vs {input_shape}). Rebuilding model…")
+        except Exception as e:
+            logger.warning(f"Could not load existing model: {e}")
+
+    if not model_loaded:
         logger.info("Building new LSTM model …")
         model = build_model(input_shape)
         history = train_model(model, X_train, y_train)

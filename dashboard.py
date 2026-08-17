@@ -950,7 +950,7 @@ def _get_data(symbol, interval, period):
     return df
 
 
-@st.cache_resource(show_spinner="Running LSTM Intelligence Engine…")
+@st.cache_resource(show_spinner="Running Multi-Model AI Intelligence Engine…")
 def _get_model_and_preds(symbol, interval, period, retrain):
     from model      import preprocess_data, build_model, train_model, save_model, load_model
     from predictor  import predict_sets, predict_next_day, predict_next_5min, inverse_actual
@@ -958,21 +958,32 @@ def _get_model_and_preds(symbol, interval, period, retrain):
     from config     import MODEL_PATH, TIME_STEP
     from data_fetcher import fetch_news_sentiment
     from xai_engine   import get_feature_importance
+    from backend.app.prediction.engine import prediction_engine
 
     df = _get_data(symbol, interval, period)
+    
+    # Run production backend pipeline
+    try:
+        backend_res = prediction_engine.predict_full_pipeline(df, symbol=symbol, retrain=retrain)
+    except Exception as e:
+        backend_res = None
+
     X_train, y_train, X_test, y_test, scaler, train_size, target_idx, numeric_df = \
         preprocess_data(df)
     n_features  = X_train.shape[2]
-    input_shape = (TIME_STEP, n_features)
+    seq_len     = X_train.shape[1]
+    input_shape = (seq_len, n_features)
 
     model_loaded = False
     if os.path.exists(MODEL_PATH) and not retrain:
         try:
             model        = load_model(MODEL_PATH)
-            history      = None
-            model_loaded = True
+            if model.input_shape[1:] == input_shape:
+                history      = None
+                model_loaded = True
+            else:
+                model_loaded = False
         except Exception as e:
-            st.error(f"Model load error: {e}")
             model_loaded = False
 
     if not model_loaded:
@@ -996,6 +1007,19 @@ def _get_model_and_preds(symbol, interval, period, retrain):
     metrics   = evaluate_model(actual_test, test_pred)
     bt_result = backtest(actual_test, test_pred)
 
+    if backend_res:
+        gemma_ai = backend_res.get("gemma_ai", {})
+        ensemble_details = backend_res.get("ensemble_details", {})
+        support_resistance = backend_res.get("support_resistance", {})
+        market_regime = backend_res.get("market_regime", {})
+        backtest_full = backend_res.get("backtesting", {})
+    else:
+        gemma_ai = {}
+        ensemble_details = {}
+        support_resistance = {}
+        market_regime = {}
+        backtest_full = {}
+
     return {
         "df"           : df,
         "train_pred"   : train_pred,
@@ -1011,6 +1035,11 @@ def _get_model_and_preds(symbol, interval, period, retrain):
         "train_size"   : train_size,
         "sentiment"    : sentiment_data,
         "xai"          : xai_results,
+        "gemma_ai"     : gemma_ai,
+        "ensemble"     : ensemble_details,
+        "support_resistance": support_resistance,
+        "market_regime": market_regime,
+        "backtest_full": backtest_full
     }
 
 
@@ -1677,6 +1706,62 @@ if run_btn or "results" in st.session_state:
                 </div>
             </div>
             """, unsafe_allow_html=True)
+
+    # ══════════════════════════════════════════════════════════════
+    #  GEMMA AI INSIGHTS & MULTI-MODEL ENSEMBLE
+    # ══════════════════════════════════════════════════════════════
+    gemma_info = r.get("gemma_ai", {})
+    ensemble_info = r.get("ensemble", {})
+
+    if gemma_info or ensemble_info:
+        st.markdown('<div class="section-label">AI Reasoning & Models</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">Gemma AI Explanation & Multi-Model Ensemble</div>', unsafe_allow_html=True)
+        
+        col_gemma, col_ens = st.columns([1.4, 1])
+
+        with col_gemma:
+            st.markdown("""
+            <div class="card">
+                <div style="font-size:0.75rem; font-weight:700; color:#f59e0b; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">
+                    ✨ Google Gemma AI Market Analysis
+                </div>
+            """, unsafe_allow_html=True)
+            
+            if gemma_info.get("market_summary"):
+                st.markdown(f"**Market Summary:** {gemma_info['market_summary']}")
+            if gemma_info.get("prediction_explanation"):
+                st.markdown(f"**Prediction Rationale:** {gemma_info['prediction_explanation']}")
+            if gemma_info.get("support_resistance_explanation"):
+                st.markdown(f"**Support & Resistance:** {gemma_info['support_resistance_explanation']}")
+            if gemma_info.get("risk_analysis"):
+                st.markdown(f"**Risk Analysis:** {gemma_info['risk_analysis']}")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        with col_ens:
+            st.markdown("""
+            <div class="card">
+                <div style="font-size:0.75rem; font-weight:700; color:#38bdf8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:12px;">
+                    🤖 Multi-Model Ensemble Consensus
+                </div>
+            """, unsafe_allow_html=True)
+            
+            preds_map = ensemble_info.get("predictions_breakdown", {})
+            weights_map = ensemble_info.get("model_weights", {})
+            
+            if preds_map:
+                ens_rows = []
+                for m_name, m_pred in preds_map.items():
+                    m_w = weights_map.get(m_name, 0.0) * 100.0
+                    ens_rows.append({
+                        "Model": m_name,
+                        "Predicted Price": f"₹{m_pred:,.2f}",
+                        "Weight": f"{m_w:.1f}%"
+                    })
+                ens_df = pd.DataFrame(ens_rows)
+                st.dataframe(ens_df, use_container_width=True, hide_index=True)
+            else:
+                st.caption("Ensemble breakdown calculating...")
+            st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<div style='margin-top:24px;'></div>", unsafe_allow_html=True)
 

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Logs & temporary files
+*.log
+stock_ai.log
+
+# Model artifacts & generated outputs
+prediction_result.json
+advanced_prediction.png
+backend/logs/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

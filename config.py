@@ -41,8 +41,8 @@ DENSE_UNITS  = 1               # Output: single price prediction
 # ─────────────────────────────────────────────
 #  TRAINING
 # ─────────────────────────────────────────────
-EPOCHS     = 25
-BATCH_SIZE = 16
+EPOCHS     = 5
+BATCH_SIZE = 64
 OPTIMIZER  = "adam"
 LOSS       = "huber_loss"      # Huber loss is more robust to outliers than MSE
 
